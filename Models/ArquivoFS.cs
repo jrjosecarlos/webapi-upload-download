@@ -9,7 +9,7 @@ namespace WebApiUploadDownload.Models
     public class ArquivoFS : Arquivo
     {
         [Required]
-        [StringLength(100)]
+        [StringLength(200)]
         public string Caminho { get; set; }
     }
 }
