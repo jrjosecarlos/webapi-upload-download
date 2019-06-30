@@ -12,5 +12,16 @@ namespace WebApiUploadDownload.Models
             : base(options)
         {
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Arquivo>()
+                .Property(b => b.DataCriacao)
+                .HasDefaultValueSql("getdate()");
+            modelBuilder.Entity<ArquivoFS>()
+                .HasBaseType<Arquivo>();
+        }
+
+        public DbSet<Arquivo> Arquivos { get; set; }
     }
 }
