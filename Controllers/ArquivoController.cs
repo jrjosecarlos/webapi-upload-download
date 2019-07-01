@@ -17,22 +17,37 @@ namespace WebApiUploadDownload.Controllers
         public ArquivoController(WebApiUploadDownloadContext context)
         {
             _context = context;
-
-            //TODO: Código de inicialização para testes, será removido futuramente
-            if (_context.Arquivos.Count() == 0)
-            {
-                _context.Arquivos.Add(new ArquivoFS { Nome = "Arquivo teste", Caminho = "pasta/teste" });
-                _context.Arquivos.Add(new ArquivoDB { Nome = "Arquivo bin" });
-                _context.SaveChanges();
-            }
-
         }
 
         // GET: api/Arquivo
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Arquivo>>> GetArquivos()
         {
-            return await _context.Arquivos.ToListAsync();
+            //TODO: Código de inicialização para testes, será removido futuramente
+            if (_context.Arquivos.Count() == 0)
+            {
+
+                _context.Arquivos.Add(new Arquivo
+                {
+                    Nome = "Arquivo bin",
+                    ArquivoDB = new ArquivoDB
+                    {
+                        Conteudo = new byte[] { 0x30 }
+                    }
+                });
+                _context.Add(new Arquivo
+                {
+                    Nome = "Arquivo teste",
+                    Caminho = "pasta/teste"
+                });
+                _context.SaveChanges();
+            }
+
+            var arquivos = _context.Arquivos
+                .Include(a => a.ArquivoDB)
+                .AsNoTracking();
+
+            return await arquivos.ToListAsync();
         }
 
     }
