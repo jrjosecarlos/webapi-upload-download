@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiUploadDownload.Models;
+using WebApiUploadDownload.Models.ViewModels;
 
 namespace WebApiUploadDownload.Controllers
 {
@@ -21,7 +22,7 @@ namespace WebApiUploadDownload.Controllers
 
         // GET: api/Arquivo
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Arquivo>>> GetArquivos()
+        public async Task<ActionResult<IEnumerable<ArquivoViewModel>>> GetArquivos()
         {
             //TODO: Código de inicialização para testes, será removido futuramente
             if (_context.Arquivos.Count() == 0)
@@ -44,7 +45,15 @@ namespace WebApiUploadDownload.Controllers
             }
 
             var arquivos = _context.Arquivos
-                .Include(a => a.ArquivoDB)
+                //.Include(a => a.ArquivoDB)
+                .Select(a => new ArquivoViewModel
+                {
+                    ID = a.ID,
+                    Nome = a.Nome,
+                    Caminho = a.Caminho,
+                    DataCriacao = a.DataCriacao,
+                    HasArquivoDB = a.ArquivoDB != null
+                })
                 .AsNoTracking();
 
             return await arquivos.ToListAsync();
