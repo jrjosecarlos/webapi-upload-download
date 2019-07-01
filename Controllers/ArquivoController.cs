@@ -59,5 +59,29 @@ namespace WebApiUploadDownload.Controllers
             return await arquivos.ToListAsync();
         }
 
+        // GET: api/Arquivo/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Arquivo>> GetArquivo(int id)
+        {
+            var arquivo = await _context.Arquivos.FindAsync(id);
+
+            if (arquivo == null)
+            {
+                return NotFound();
+            }
+
+            return arquivo;
+        }
+
+        // POST: api/Arquivo
+        [HttpPost]
+        public async Task<ActionResult<Arquivo>> PostTodoItem(Arquivo arquivo)
+        {
+            _context.Arquivos.Add(arquivo);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetArquivo), new { id = arquivo.ID }, arquivo);
+        }
+
     }
 }
