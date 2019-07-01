@@ -1,5 +1,5 @@
 ﻿const uri = "api/arquivo";
-let todos = null;
+let arquivos = null;
 
 $(document).ready(function () {
     getData();
@@ -46,16 +46,22 @@ function getData() {
                 tr.appendTo(tBody);
             });
 
-            todos = data;
+            arquivos = data;
         }
     });
 }
 
 function addItem() {
+    const fileInput = $("#add-file");
+
     const item = {
-        name: $("#add-name").val(),
-        isComplete: false
+        nome: fileInput.val().replace(/.*[\/\\]/, ''),
+        caminho: "fixo"
     };
+
+    const tBody = $("#arquivos");
+
+    tBody.hide();
 
     $.ajax({
         type: "POST",
@@ -68,7 +74,10 @@ function addItem() {
         },
         success: function (result) {
             getData();
-            $("#add-name").val("");
+            fileInput.val("");
+        },
+        complete: function (jqXHR) {
+            tBody.show();
         }
     });
 }
