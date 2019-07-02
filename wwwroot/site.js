@@ -24,7 +24,7 @@ function getData() {
                             $("<input/>", {
                                 type: "checkbox",
                                 disabled: true,
-                                checked: item.hasArquivoDB
+                                checked: item.isArquivoDB
                             })
                         )
                     )
@@ -52,12 +52,18 @@ function getData() {
 }
 
 function addItem() {
-    const fileInput = $("#add-file");
+    const fileInput = $("#add-file")[0];
 
-    const item = {
-        nome: fileInput.val().replace(/.*[\/\\]/, ''),
-        caminho: "fixo"
+    const payload = {
+        nome: fileInput.value.replace(/.*[\/\\]/, ''),
+        caminho: "fixo",
+        isArquivoDB: $("#add-DB").is(":checked")
     };
+
+    let formData = new FormData();
+
+    formData.append("payload", JSON.stringify(payload));
+    formData.append("arquivo", fileInput.files[0]);
 
     const tBody = $("#arquivos");
 
@@ -65,12 +71,14 @@ function addItem() {
 
     $.ajax({
         type: "POST",
-        accepts: "application/json",
         url: uri,
-        contentType: "application/json",
-        data: JSON.stringify(item),
+        contentType: false,
+        enctype: 'multipart/form-data',
+        processData: false,
+        data: formData,
         error: function (jqXHR, textStatus, errorThrown) {
             alert("Something went wrong!");
+            console.log(errorThrown);
         },
         success: function (result) {
             getData();

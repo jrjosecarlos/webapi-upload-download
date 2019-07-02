@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace WebApiUploadDownload.Models.ViewModels
 
         public DateTime DataCriacao { get; set; }
 
-        public bool HasArquivoDB { get; set; }
+        public bool IsArquivoDB { get; set; }
+
     }
 }

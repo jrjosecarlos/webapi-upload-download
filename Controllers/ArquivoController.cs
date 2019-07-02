@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using WebApiUploadDownload.Models;
 using WebApiUploadDownload.Models.ViewModels;
 
@@ -52,7 +54,7 @@ namespace WebApiUploadDownload.Controllers
                     Nome = a.Nome,
                     Caminho = a.Caminho,
                     DataCriacao = a.DataCriacao,
-                    HasArquivoDB = a.ArquivoDB != null
+                    IsArquivoDB = a.ArquivoDB != null
                 })
                 .AsNoTracking();
 
@@ -75,12 +77,34 @@ namespace WebApiUploadDownload.Controllers
 
         // POST: api/Arquivo
         [HttpPost]
-        public async Task<ActionResult<Arquivo>> PostTodoItem(Arquivo arquivo)
+        public async Task<ActionResult<Arquivo>> PostTodoItem([FromForm] ArquivoUploadViewModel arquivoUploadVM)
         {
-            _context.Arquivos.Add(arquivo);
+            // TODO: Adicionar verificação da desserialização, para retornar um código 400
+            var jsonPayload = arquivoUploadVM.Payload;
+            var novoArquivo = JsonConvert.DeserializeObject<Arquivo>(await new StringReader(jsonPayload).ReadToEndAsync());
+
+            if (!TryValidateModel(novoArquivo))
+            {
+                return BadRequest(ModelState);
+            }
+
+            IFormFile arquivo = arquivoUploadVM.Arquivo;
+            byte[] myFileContent;
+
+            // TODO: ler corretamente
+            using (var memoryStream = new MemoryStream())
+            {
+                await arquivo.CopyToAsync(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                myFileContent = new byte[memoryStream.Length];
+                await memoryStream.ReadAsync(myFileContent, 0, myFileContent.Length);
+            }
+
+
+            _context.Arquivos.Add(novoArquivo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetArquivo), new { id = arquivo.ID }, arquivo);
+            return CreatedAtAction(nameof(GetArquivo), new { id = novoArquivo.ID }, novoArquivo);
         }
 
     }
