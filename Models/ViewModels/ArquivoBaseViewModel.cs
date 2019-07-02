@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace WebApiUploadDownload.Models.ViewModels
 {
-    public class ArquivoViewModel
+    public class ArquivoBaseViewModel
     {
         public int ID { get; set; }
 

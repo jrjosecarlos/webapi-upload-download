@@ -22,7 +22,7 @@ namespace WebApiUploadDownload.Controllers
 
         // GET: api/Arquivo
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ArquivoViewModel>>> GetArquivos()
+        public async Task<ActionResult<IEnumerable<ArquivoBaseViewModel>>> GetArquivos()
         {
             //TODO: Código de inicialização para testes, será removido futuramente
             if (_context.Arquivos.Count() == 0)
@@ -46,7 +46,7 @@ namespace WebApiUploadDownload.Controllers
 
             var arquivos = _context.Arquivos
                 //.Include(a => a.ArquivoDB)
-                .Select(a => new ArquivoViewModel
+                .Select(a => new ArquivoBaseViewModel
                 {
                     ID = a.ID,
                     Nome = a.Nome,
