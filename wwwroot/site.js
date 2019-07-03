@@ -82,7 +82,7 @@ function addItem() {
         },
         success: function (result) {
             getData();
-            fileInput.val("");
+            fileInput.value = "";
         },
         complete: function (jqXHR) {
             tBody.show();
