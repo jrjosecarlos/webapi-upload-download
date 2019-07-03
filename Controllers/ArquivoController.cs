@@ -20,6 +20,10 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
+        private string BaseUploadFolder { get
+            {
+                return Path.Combine(_env.WebRootPath, "uploaded");
+            } }
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
         {
@@ -68,7 +72,7 @@ namespace WebApiUploadDownload.Controllers
 
         // GET: api/Arquivo/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Arquivo>> GetArquivo(int id)
+        public async Task<IActionResult> GetArquivo(int id)
         {
             var arquivo = await _context.Arquivos.FindAsync(id);
 
@@ -77,7 +81,21 @@ namespace WebApiUploadDownload.Controllers
                 return NotFound();
             }
 
-            return arquivo;
+            var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
+
+            var fileInfo = new FileInfo(caminhoArquivo);
+
+            if (!fileInfo.Exists)
+            {
+                return NotFound();
+            }
+
+            if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
+            {
+                return BadRequest();
+            }
+
+            return File(fileInfo.OpenRead(), "application/octet-stream", arquivo.Caminho);
         }
 
         // POST: api/Arquivo
@@ -116,13 +134,13 @@ namespace WebApiUploadDownload.Controllers
 
             // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
             // Garantir que a pasta de upload está criada
-            Directory.CreateDirectory(Path.Combine(_env.WebRootPath, "uploaded"));
+            Directory.CreateDirectory(this.BaseUploadFolder);
 
             // Sanitizar o nome do arquivo
             var caracteresInvalidos = Path.GetInvalidFileNameChars();
             var nomeArquivoSanitizado = String.Join("_", arquivo.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
 
-            using (var fileStream = new FileStream(Path.Combine(_env.WebRootPath, "uploaded", nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+            using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
             {
                 await arquivo.CopyToAsync(fileStream);
             }

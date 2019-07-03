@@ -16,7 +16,7 @@ function getData() {
             $(tBody).empty();
 
             $.each(data, function (key, item) {
-                const tr = $("<tr></tr>") 
+                const tr = $("<tr></tr>")
                     .append($("<td></td>").text(item.nome))
                     .append($("<td></td>").text(item.caminho != null ? item.caminho : "N/A"))
                     .append(
@@ -30,9 +30,7 @@ function getData() {
                     )
                     .append(
                         $("<td></td>").append(
-                            $("<button>Download</button>").on("click", function () {
-                                editItem(item.id);
-                            })
+                            $("<a>Download</a>").attr("href", uri + "/" + item.id)
                         )
                     )
                     .append(
@@ -99,17 +97,10 @@ function deleteItem(id) {
             getData();
         }
     });
-}
+}*/
 
-function editItem(id) {
-    $.each(todos, function (key, item) {
-        if (item.id === id) {
-            $("#edit-name").val(item.name);
-            $("#edit-id").val(item.id);
-            $("#edit-isComplete")[0].checked = item.isComplete;
-        }
-    });
-    $("#spoiler").css({ display: "block" });
+function downloadItem(id) {
+    window.open(window.location + uri + "/" + id/*, "_blank"*/); /* Voluntariamente mantido sem o _blank */
 }
 
 $(".my-form").on("submit", function () {
@@ -133,7 +124,7 @@ $(".my-form").on("submit", function () {
     closeInput();
     return false;
 });
-*/
+
 function closeInput() {
     $("#spoiler").css({ display: "none" });
 }
