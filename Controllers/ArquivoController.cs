@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,10 +19,12 @@ namespace WebApiUploadDownload.Controllers
     public class ArquivoController : ControllerBase
     {
         private readonly WebApiUploadDownloadContext _context;
+        private readonly IHostingEnvironment _env;
 
-        public ArquivoController(WebApiUploadDownloadContext context)
+        public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         // GET: api/Arquivo
@@ -79,9 +84,17 @@ namespace WebApiUploadDownload.Controllers
         [HttpPost]
         public async Task<ActionResult<Arquivo>> PostTodoItem([FromForm] ArquivoUploadViewModel arquivoUploadVM)
         {
-            // TODO: Adicionar verificação da desserialização, para retornar um código 400
             var jsonPayload = arquivoUploadVM.Payload;
-            var novoArquivo = JsonConvert.DeserializeObject<Arquivo>(await new StringReader(jsonPayload).ReadToEndAsync());
+
+            Arquivo novoArquivo;
+            try
+            {
+                novoArquivo = JsonConvert.DeserializeObject<Arquivo>(await new StringReader(jsonPayload).ReadToEndAsync());
+            }
+            catch (JsonReaderException)
+            {
+                return BadRequest();
+            }
 
             if (!TryValidateModel(novoArquivo))
             {
@@ -89,17 +102,32 @@ namespace WebApiUploadDownload.Controllers
             }
 
             IFormFile arquivo = arquivoUploadVM.Arquivo;
-            byte[] myFileContent;
+            //byte[] myFileContent;
 
             // TODO: ler corretamente
-            using (var memoryStream = new MemoryStream())
+            /*using (var memoryStream = new MemoryStream())
             {
                 await arquivo.CopyToAsync(memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 myFileContent = new byte[memoryStream.Length];
                 await memoryStream.ReadAsync(myFileContent, 0, myFileContent.Length);
+
+            }*/
+
+            // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
+            // Garantir que a pasta de upload está criada
+            Directory.CreateDirectory(Path.Combine(_env.WebRootPath, "uploaded"));
+
+            // Sanitizar o nome do arquivo
+            var caracteresInvalidos = Path.GetInvalidFileNameChars();
+            var nomeArquivoSanitizado = String.Join("_", arquivo.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+
+            using (var fileStream = new FileStream(Path.Combine(_env.WebRootPath, "uploaded", nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+            {
+                await arquivo.CopyToAsync(fileStream);
             }
 
+            novoArquivo.Caminho = nomeArquivoSanitizado;
 
             _context.Arquivos.Add(novoArquivo);
             await _context.SaveChangesAsync();
