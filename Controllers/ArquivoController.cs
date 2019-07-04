@@ -119,6 +119,7 @@ namespace WebApiUploadDownload.Controllers
 
             IFormFile arquivoPayload = arquivoUploadVM.Arquivo;
 
+            // Sanitizar o nome do arquivo
             //TODO: Adicionar validação de arquivo: extensões e tamanho
             var caracteresInvalidos = Path.GetInvalidFileNameChars();
             var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
@@ -132,32 +133,28 @@ namespace WebApiUploadDownload.Controllers
                 return BadRequest(ModelState);
             }
 
-
-            //byte[] myFileContent;
-
-            // TODO: ler corretamente
-            /*using (var memoryStream = new MemoryStream())
-            {
-                await arquivo.CopyToAsync(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-                myFileContent = new byte[memoryStream.Length];
-                await memoryStream.ReadAsync(myFileContent, 0, myFileContent.Length);
-
-            }*/
-
             // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
             // Garantir que a pasta de upload está criada
             Directory.CreateDirectory(this.BaseUploadFolder);
 
-            // Sanitizar o nome do arquivo
-
-
-            using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+            if (arquivoBase.IsArquivoDB)
             {
-                await arquivoPayload.CopyToAsync(fileStream);
+                using (var memoryStream = new MemoryStream())
+                {
+                    await arquivoPayload.CopyToAsync(memoryStream);
+                    arquivo.ArquivoDB = new ArquivoDB
+                    {
+                        Conteudo = memoryStream.ToArray()
+                    };
+                };
             }
-
-
+            else
+            {
+                using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+                {
+                    await arquivoPayload.CopyToAsync(fileStream);
+                }
+            }
 
             _context.Arquivos.Add(arquivo);
             await _context.SaveChangesAsync();
