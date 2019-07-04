@@ -54,7 +54,6 @@ function addItem() {
 
     const payload = {
         nome: fileInput.value.replace(/.*[\/\\]/, ''),
-        caminho: "fixo",
         isArquivoDB: $("#add-DB").is(":checked")
     };
 

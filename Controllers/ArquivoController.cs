@@ -20,10 +20,13 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
-        private string BaseUploadFolder { get
+        private string BaseUploadFolder
+        {
+            get
             {
                 return Path.Combine(_env.WebRootPath, "uploaded");
-            } }
+            }
+        }
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
         {
@@ -104,22 +107,32 @@ namespace WebApiUploadDownload.Controllers
         {
             var jsonPayload = arquivoUploadVM.Payload;
 
-            Arquivo novoArquivo;
+            ArquivoBaseViewModel arquivoBase;
             try
             {
-                novoArquivo = JsonConvert.DeserializeObject<Arquivo>(await new StringReader(jsonPayload).ReadToEndAsync());
+                arquivoBase = JsonConvert.DeserializeObject<ArquivoBaseViewModel>(await new StringReader(jsonPayload).ReadToEndAsync());
             }
             catch (JsonReaderException)
             {
                 return BadRequest();
             }
 
-            if (!TryValidateModel(novoArquivo))
+            IFormFile arquivoPayload = arquivoUploadVM.Arquivo;
+
+            //TODO: Adicionar validação de arquivo: extensões e tamanho
+            var caracteresInvalidos = Path.GetInvalidFileNameChars();
+            var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+
+            arquivoBase.Caminho = nomeArquivoSanitizado;
+
+            Arquivo arquivo = arquivoBase.ToArquivo();
+
+            if (!TryValidateModel(arquivo))
             {
                 return BadRequest(ModelState);
             }
 
-            IFormFile arquivo = arquivoUploadVM.Arquivo;
+
             //byte[] myFileContent;
 
             // TODO: ler corretamente
@@ -137,20 +150,19 @@ namespace WebApiUploadDownload.Controllers
             Directory.CreateDirectory(this.BaseUploadFolder);
 
             // Sanitizar o nome do arquivo
-            var caracteresInvalidos = Path.GetInvalidFileNameChars();
-            var nomeArquivoSanitizado = String.Join("_", arquivo.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+
 
             using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
             {
-                await arquivo.CopyToAsync(fileStream);
+                await arquivoPayload.CopyToAsync(fileStream);
             }
 
-            novoArquivo.Caminho = nomeArquivoSanitizado;
 
-            _context.Arquivos.Add(novoArquivo);
+
+            _context.Arquivos.Add(arquivo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetArquivo), new { id = novoArquivo.ID }, novoArquivo);
+            return CreatedAtAction(nameof(GetArquivo), new { id = arquivoBase.ID }, arquivoBase);
         }
 
     }
