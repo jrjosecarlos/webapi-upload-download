@@ -18,8 +18,6 @@ namespace WebApiUploadDownload.Models
             modelBuilder.Entity<Arquivo>()
                 .Property(b => b.DataCriacao)
                 .HasDefaultValueSql("getdate()");
-            modelBuilder.Entity<ArquivoFS>()
-                .HasBaseType<Arquivo>();
         }
 
         public DbSet<Arquivo> Arquivos { get; set; }
