@@ -77,28 +77,42 @@ namespace WebApiUploadDownload.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArquivo(int id)
         {
-            var arquivo = await _context.Arquivos.FindAsync(id);
+            var arquivo = await _context.Arquivos
+                .Include(a => a.ArquivoDB)
+                .Where(a => a.ID == id)
+                .FirstOrDefaultAsync();
 
             if (arquivo == null)
             {
                 return NotFound();
             }
 
-            var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
-
-            var fileInfo = new FileInfo(caminhoArquivo);
-
-            if (!fileInfo.Exists)
+            Stream stream;
+            if (arquivo.ArquivoDB == null)
             {
-                return NotFound();
+                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
+
+                var fileInfo = new FileInfo(caminhoArquivo);
+
+                if (!fileInfo.Exists)
+                {
+                    return NotFound();
+                }
+
+                // TODO: verificar se essa verificação é necessária (a situação descrita só ocorreria por um erro no upload)
+                if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
+                {
+                    return BadRequest();
+                }
+
+                stream = fileInfo.OpenRead();
+            }
+            else
+            {
+                stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
             }
 
-            if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
-            {
-                return BadRequest();
-            }
-
-            return File(fileInfo.OpenRead(), "application/octet-stream", arquivo.Caminho);
+            return File(stream, "application/octet-stream", arquivo.Caminho);
         }
 
         // POST: api/Arquivo
