@@ -16,7 +16,7 @@ function getData() {
             $(tBody).empty();
 
             $.each(data, function (key, item) {
-                const tr = $("<tr></tr>") 
+                const tr = $("<tr></tr>")
                     .append($("<td></td>").text(item.nome))
                     .append($("<td></td>").text(item.caminho != null ? item.caminho : "N/A"))
                     .append(
@@ -24,15 +24,13 @@ function getData() {
                             $("<input/>", {
                                 type: "checkbox",
                                 disabled: true,
-                                checked: item.hasArquivoDB
+                                checked: item.isArquivoDB
                             })
                         )
                     )
                     .append(
                         $("<td></td>").append(
-                            $("<button>Download</button>").on("click", function () {
-                                editItem(item.id);
-                            })
+                            $("<a>Download</a>").attr("href", uri + "/" + item.id)
                         )
                     )
                     .append(
@@ -52,12 +50,18 @@ function getData() {
 }
 
 function addItem() {
-    const fileInput = $("#add-file");
+    const fileInput = $("#add-file")[0];
 
-    const item = {
-        nome: fileInput.val().replace(/.*[\/\\]/, ''),
-        caminho: "fixo"
+    const payload = {
+        nome: fileInput.value.replace(/.*[\/\\]/, ''),
+        caminho: "fixo",
+        isArquivoDB: $("#add-DB").is(":checked")
     };
+
+    let formData = new FormData();
+
+    formData.append("payload", JSON.stringify(payload));
+    formData.append("arquivo", fileInput.files[0]);
 
     const tBody = $("#arquivos");
 
@@ -65,16 +69,18 @@ function addItem() {
 
     $.ajax({
         type: "POST",
-        accepts: "application/json",
         url: uri,
-        contentType: "application/json",
-        data: JSON.stringify(item),
+        contentType: false,
+        enctype: 'multipart/form-data',
+        processData: false,
+        data: formData,
         error: function (jqXHR, textStatus, errorThrown) {
             alert("Something went wrong!");
+            console.log(errorThrown);
         },
         success: function (result) {
             getData();
-            fileInput.val("");
+            fileInput.value = "";
         },
         complete: function (jqXHR) {
             tBody.show();
@@ -91,17 +97,10 @@ function deleteItem(id) {
             getData();
         }
     });
-}
+}*/
 
-function editItem(id) {
-    $.each(todos, function (key, item) {
-        if (item.id === id) {
-            $("#edit-name").val(item.name);
-            $("#edit-id").val(item.id);
-            $("#edit-isComplete")[0].checked = item.isComplete;
-        }
-    });
-    $("#spoiler").css({ display: "block" });
+function downloadItem(id) {
+    window.open(window.location + uri + "/" + id/*, "_blank"*/); /* Voluntariamente mantido sem o _blank */
 }
 
 $(".my-form").on("submit", function () {
@@ -125,7 +124,7 @@ $(".my-form").on("submit", function () {
     closeInput();
     return false;
 });
-*/
+
 function closeInput() {
     $("#spoiler").css({ display: "none" });
 }
