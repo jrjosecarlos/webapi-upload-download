@@ -20,10 +20,13 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
-        private string BaseUploadFolder { get
+        private string BaseUploadFolder
+        {
+            get
             {
                 return Path.Combine(_env.WebRootPath, "uploaded");
-            } }
+            }
+        }
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
         {
@@ -74,28 +77,42 @@ namespace WebApiUploadDownload.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArquivo(int id)
         {
-            var arquivo = await _context.Arquivos.FindAsync(id);
+            var arquivo = await _context.Arquivos
+                .Include(a => a.ArquivoDB)
+                .Where(a => a.ID == id)
+                .FirstOrDefaultAsync();
 
             if (arquivo == null)
             {
                 return NotFound();
             }
 
-            var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
-
-            var fileInfo = new FileInfo(caminhoArquivo);
-
-            if (!fileInfo.Exists)
+            Stream stream;
+            if (arquivo.ArquivoDB == null)
             {
-                return NotFound();
+                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
+
+                var fileInfo = new FileInfo(caminhoArquivo);
+
+                if (!fileInfo.Exists)
+                {
+                    return NotFound();
+                }
+
+                // TODO: verificar se essa verificação é necessária (a situação descrita só ocorreria por um erro no upload)
+                if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
+                {
+                    return BadRequest();
+                }
+
+                stream = fileInfo.OpenRead();
+            }
+            else
+            {
+                stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
             }
 
-            if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
-            {
-                return BadRequest();
-            }
-
-            return File(fileInfo.OpenRead(), "application/octet-stream", arquivo.Caminho);
+            return File(stream, "application/octet-stream", arquivo.Caminho);
         }
 
         // POST: api/Arquivo
@@ -104,53 +121,59 @@ namespace WebApiUploadDownload.Controllers
         {
             var jsonPayload = arquivoUploadVM.Payload;
 
-            Arquivo novoArquivo;
+            ArquivoBaseViewModel arquivoBase;
             try
             {
-                novoArquivo = JsonConvert.DeserializeObject<Arquivo>(await new StringReader(jsonPayload).ReadToEndAsync());
+                arquivoBase = JsonConvert.DeserializeObject<ArquivoBaseViewModel>(await new StringReader(jsonPayload).ReadToEndAsync());
             }
             catch (JsonReaderException)
             {
                 return BadRequest();
             }
 
-            if (!TryValidateModel(novoArquivo))
+            IFormFile arquivoPayload = arquivoUploadVM.Arquivo;
+
+            // Sanitizar o nome do arquivo
+            //TODO: Adicionar validação de arquivo: extensões e tamanho
+            var caracteresInvalidos = Path.GetInvalidFileNameChars();
+            var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+
+            arquivoBase.Caminho = nomeArquivoSanitizado;
+
+            Arquivo arquivo = arquivoBase.ToArquivo();
+
+            if (!TryValidateModel(arquivo))
             {
                 return BadRequest(ModelState);
             }
-
-            IFormFile arquivo = arquivoUploadVM.Arquivo;
-            //byte[] myFileContent;
-
-            // TODO: ler corretamente
-            /*using (var memoryStream = new MemoryStream())
-            {
-                await arquivo.CopyToAsync(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-                myFileContent = new byte[memoryStream.Length];
-                await memoryStream.ReadAsync(myFileContent, 0, myFileContent.Length);
-
-            }*/
 
             // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
             // Garantir que a pasta de upload está criada
             Directory.CreateDirectory(this.BaseUploadFolder);
 
-            // Sanitizar o nome do arquivo
-            var caracteresInvalidos = Path.GetInvalidFileNameChars();
-            var nomeArquivoSanitizado = String.Join("_", arquivo.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
-
-            using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+            if (arquivoBase.IsArquivoDB)
             {
-                await arquivo.CopyToAsync(fileStream);
+                using (var memoryStream = new MemoryStream())
+                {
+                    await arquivoPayload.CopyToAsync(memoryStream);
+                    arquivo.ArquivoDB = new ArquivoDB
+                    {
+                        Conteudo = memoryStream.ToArray()
+                    };
+                };
+            }
+            else
+            {
+                using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
+                {
+                    await arquivoPayload.CopyToAsync(fileStream);
+                }
             }
 
-            novoArquivo.Caminho = nomeArquivoSanitizado;
-
-            _context.Arquivos.Add(novoArquivo);
+            _context.Arquivos.Add(arquivo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetArquivo), new { id = novoArquivo.ID }, novoArquivo);
+            return CreatedAtAction(nameof(GetArquivo), new { id = arquivoBase.ID }, arquivoBase);
         }
 
     }
