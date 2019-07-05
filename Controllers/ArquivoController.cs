@@ -44,7 +44,6 @@ namespace WebApiUploadDownload.Controllers
                 {
                     ID = a.ID,
                     Nome = a.Nome,
-                    Caminho = a.NomeReal,
                     DataCriacao = a.DataCriacao,
                     IsArquivoDB = a.ArquivoDB != null
                 })
@@ -118,9 +117,9 @@ namespace WebApiUploadDownload.Controllers
             var caracteresInvalidos = Path.GetInvalidFileNameChars();
             var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
 
-            arquivoBase.Caminho = nomeArquivoSanitizado;
-
             Arquivo arquivo = arquivoBase.ToArquivo();
+
+            arquivo.NomeReal = nomeArquivoSanitizado;
 
             if (!TryValidateModel(arquivo))
             {
