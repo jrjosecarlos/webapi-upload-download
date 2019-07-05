@@ -44,7 +44,7 @@ namespace WebApiUploadDownload.Controllers
                 {
                     ID = a.ID,
                     Nome = a.Nome,
-                    Caminho = a.Caminho,
+                    Caminho = a.NomeReal,
                     DataCriacao = a.DataCriacao,
                     IsArquivoDB = a.ArquivoDB != null
                 })
@@ -70,7 +70,7 @@ namespace WebApiUploadDownload.Controllers
             Stream stream;
             if (arquivo.ArquivoDB == null)
             {
-                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
+                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.NomeReal);
 
                 var fileInfo = new FileInfo(caminhoArquivo);
 
@@ -92,7 +92,7 @@ namespace WebApiUploadDownload.Controllers
                 stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
             }
 
-            return File(stream, "application/octet-stream", arquivo.Caminho);
+            return File(stream, "application/octet-stream", arquivo.NomeReal);
         }
 
         // POST: api/Arquivo

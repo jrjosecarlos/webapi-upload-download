@@ -25,7 +25,7 @@ namespace WebApiUploadDownload.Models.ViewModels
             {
                 ID = this.ID,
                 Nome = this.Nome,
-                Caminho = this.Caminho,
+                NomeReal = this.Caminho,
                 DataCriacao = this.DataCriacao
             };
         }
