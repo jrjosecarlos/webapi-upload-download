@@ -26,7 +26,7 @@ namespace WebApiUploadDownload.Models.ViewModels
 
             if (ExtensoesInvalidas.Any(e =>
                     nomeArquivo.EndsWith(e, StringComparison.OrdinalIgnoreCase)
-                ) )
+                ))
             {
                 yield return new ValidationResult($"Arquivo possui extensão inválida: {nomeArquivo}.", new string[] { "Arquivo" });
             }

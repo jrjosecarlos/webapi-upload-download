@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -39,26 +38,6 @@ namespace WebApiUploadDownload.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArquivoBaseViewModel>>> GetArquivos()
         {
-            //TODO: Código de inicialização para testes, será removido futuramente
-            if (_context.Arquivos.Count() == 0)
-            {
-
-                _context.Arquivos.Add(new Arquivo
-                {
-                    Nome = "Arquivo bin",
-                    ArquivoDB = new ArquivoDB
-                    {
-                        Conteudo = new byte[] { 0x30 }
-                    }
-                });
-                _context.Add(new Arquivo
-                {
-                    Nome = "Arquivo teste",
-                    Caminho = "pasta/teste"
-                });
-                _context.SaveChanges();
-            }
-
             var arquivos = _context.Arquivos
                 //.Include(a => a.ArquivoDB)
                 .Select(a => new ArquivoBaseViewModel
