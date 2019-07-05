@@ -8,8 +8,10 @@
             cursor: pointer;
         }
 
-        #spoiler {
+        #info {
             display: none;
+            border: 1px solid;
+            padding: 2px;
         }
 
         table {
@@ -27,6 +29,14 @@
             border: 1px solid;
             padding: 5px;
         }
+
+        ul {
+            margin: 10px 10px;
+        }
+
+        form {
+            margin: 10px 10px;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
             integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -36,23 +46,14 @@
 <body>
     <h1>WebApi Download e Upload</h1>
     <h3>Incluir</h3>
+    <div id="info"></div>
+
     <form id="main-form" action="javascript:void(0);" method="POST" onsubmit="addItem()">
         <input type="file" id="add-file" placeholder="Novo Arquivo">
         <label name="label-add-DB">Adicionar em banco de dados?</label>
-        <input type="checkbox" id="add-DB"/>
+        <input type="checkbox" id="add-DB" />
         <input type="submit" value="Upload">
     </form>
-
-    <div id="spoiler">
-        <h3>Edit</h3>
-        <form class="my-form">
-            <input type="hidden" id="edit-id">
-            <input type="checkbox" id="edit-isComplete">
-            <input type="text" id="edit-name">
-            <input type="submit" value="Save">
-            <a onclick="closeInput()" aria-label="Close">&#10006;</a>
-        </form>
-    </div>
 
     <table>
         <tr>
