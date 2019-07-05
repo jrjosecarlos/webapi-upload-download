@@ -18,7 +18,6 @@ function getData() {
             $.each(data, function (key, item) {
                 const tr = $("<tr></tr>")
                     .append($("<td></td>").text(item.nome))
-                    .append($("<td></td>").text(item.caminho != null ? item.caminho : "N/A"))
                     .append(
                         $("<td></td>").append(
                             $("<input/>", {
