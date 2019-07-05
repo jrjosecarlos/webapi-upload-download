@@ -50,6 +50,8 @@ function getData() {
 }
 
 function addItem() {
+    $("#info").hide();
+
     const fileInput = $("#add-file")[0];
 
     const payload = {
@@ -74,8 +76,36 @@ function addItem() {
         processData: false,
         data: formData,
         error: function (jqXHR, textStatus, errorThrown) {
-            alert("Something went wrong!");
-            console.log(errorThrown);
+            var divInfo = $("#info")[0];
+
+            var conteudoInfo;
+
+            if (jqXHR.responseJSON.errors) {
+                conteudoInfo = $("<ul/>");
+
+                $.each(jqXHR.responseJSON.errors, function (campo, erros) {
+                    erros.forEach(function (mensagemErro) {
+                        const ul = $("<li/>")
+                            .append(
+                                $("<strong/>").text(campo + ": ")
+                            )
+                            .append(mensagemErro);
+
+                        conteudoInfo.append(ul);
+                    });
+                   
+                });
+                
+            } else {
+                $(conteudoInfo).append(" Verifique os dados e tente novamente.")
+            }
+
+            $(divInfo).empty()
+                .text("Erro ocorrido no processamento:")
+                .append(conteudoInfo)
+                .show();
+
+            console.log(errorThrown + ": " + textStatus);
         },
         success: function (result) {
             getData();
@@ -87,43 +117,6 @@ function addItem() {
     });
 }
 
-/*
-function deleteItem(id) {
-    $.ajax({
-        url: uri + "/" + id,
-        type: "DELETE",
-        success: function (result) {
-            getData();
-        }
-    });
-}*/
-
 function downloadItem(id) {
     window.open(window.location + uri + "/" + id/*, "_blank"*/); /* Voluntariamente mantido sem o _blank */
-}
-
-$(".my-form").on("submit", function () {
-    const item = {
-        name: $("#edit-name").val(),
-        isComplete: $("#edit-isComplete").is(":checked"),
-        id: $("#edit-id").val()
-    };
-
-    $.ajax({
-        url: uri + "/" + $("#edit-id").val(),
-        type: "PUT",
-        accepts: "application/json",
-        contentType: "application/json",
-        data: JSON.stringify(item),
-        success: function (result) {
-            getData();
-        }
-    });
-
-    closeInput();
-    return false;
-});
-
-function closeInput() {
-    $("#spoiler").css({ display: "none" });
 }
