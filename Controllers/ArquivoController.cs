@@ -148,8 +148,6 @@ namespace WebApiUploadDownload.Controllers
             }
 
             // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
-            // Garantir que a pasta de upload está criada
-            Directory.CreateDirectory(this.BaseUploadFolder);
 
             if (arquivoBase.IsArquivoDB)
             {
@@ -164,6 +162,8 @@ namespace WebApiUploadDownload.Controllers
             }
             else
             {
+                // Garantir que a pasta de upload está criada
+                Directory.CreateDirectory(this.BaseUploadFolder);
                 using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
                 {
                     await arquivoPayload.CopyToAsync(fileStream);
