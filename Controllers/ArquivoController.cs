@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using WebApiUploadDownload.Data;
 using WebApiUploadDownload.Models;
 using WebApiUploadDownload.Models.ViewModels;
+using WebApiUploadDownload.Services;
 
 namespace WebApiUploadDownload.Controllers
 {
@@ -20,18 +21,14 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
-        private string BaseUploadFolder
-        {
-            get
-            {
-                return Path.Combine(_env.WebRootPath, "uploaded");
-            }
-        }
+        private readonly AzureFileServerProvider _fileServerProvider;
+        private string BaseUploadFolder => Path.Combine(_env.WebRootPath, "uploaded");
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
         {
             _context = context;
             _env = env;
+            _fileServerProvider = new AzureFileServerProvider();
         }
 
         // GET: api/Arquivo
@@ -69,7 +66,7 @@ namespace WebApiUploadDownload.Controllers
             Stream stream;
             if (arquivo.ArquivoDB == null)
             {
-                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.NomeReal);
+                /*var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.NomeReal);
 
                 var fileInfo = new FileInfo(caminhoArquivo);
 
@@ -84,7 +81,9 @@ namespace WebApiUploadDownload.Controllers
                     return BadRequest();
                 }
 
-                stream = fileInfo.OpenRead();
+                stream = fileInfo.OpenRead();*/
+                stream = await _fileServerProvider.GetDownloadStreamAsync(arquivo.NomeReal);
+
             }
             else
             {
@@ -141,11 +140,17 @@ namespace WebApiUploadDownload.Controllers
             }
             else
             {
+                /*
                 // Garantir que a pasta de upload está criada
                 Directory.CreateDirectory(this.BaseUploadFolder);
                 using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
                 {
                     await arquivoPayload.CopyToAsync(fileStream);
+                }
+                */
+                using (var readStream = arquivoPayload.OpenReadStream())
+                {
+                    await _fileServerProvider.UploadFromStreamAsync(arquivo.NomeReal, readStream);
                 }
             }
 
