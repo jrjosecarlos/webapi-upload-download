@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Azure;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.File;
 using Microsoft.Extensions.Options;
@@ -14,12 +15,8 @@ namespace WebApiUploadDownload.Services
 {
     public class AzureFileServerProvider : IFileServerProvider
     {
-        private readonly string _connectionString = "";
-
         private readonly CloudFileShare _fileShare;
-
         private readonly string _baseDir;
-
         private readonly string _fileShareName;
 
         private readonly IOptions<UploadConfig> _config;
@@ -31,12 +28,10 @@ namespace WebApiUploadDownload.Services
             _baseDir = _config.Value.BaseDir ?? "uploaded";
             _fileShareName = _config.Value.FileShareName;
 
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_connectionString);
-
-            // Create a CloudFileClient object for credentialed access to Azure Files.
+            string connectionString = Environment.GetEnvironmentVariable("WAUD_File_Server_API_Key");
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
             CloudFileClient fileClient = storageAccount.CreateCloudFileClient();
 
-            // Get a reference to the file share we created previously.
             _fileShare = fileClient.GetShareReference(_fileShareName);
         }
 
