@@ -8,8 +8,8 @@ namespace WebApiUploadDownload.Services
 {
     interface IFileServerProvider
     {
-        Task<bool> UploadFromStreamAsync(String fileName, Stream stream);
+        Task UploadFromStreamAsync(string fileName, Stream stream);
 
-        Task<Stream> GetDownloadStreamAsync(String fileName);
+        Task<Stream> GetDownloadStreamAsync(string fileName);
     }
 }

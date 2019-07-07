@@ -28,7 +28,7 @@ namespace WebApiUploadDownload.Controllers
         {
             _context = context;
             _env = env;
-            _fileServerProvider = new AzureFileServerProvider();
+            _fileServerProvider = new LocalFileServerProvider(BaseUploadFolder);
         }
 
         // GET: api/Arquivo

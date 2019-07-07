@@ -48,7 +48,7 @@ namespace WebApiUploadDownload.Services
             return baseDir;
         }
 
-        public async Task<bool> UploadFromStreamAsync(String fileName, Stream stream)
+        public async Task UploadFromStreamAsync(string fileName, Stream stream)
         {
             await CheckFileShare();
 
@@ -56,11 +56,9 @@ namespace WebApiUploadDownload.Services
             CloudFile file = (await GetBaseDir()).GetFileReference(fileName);
 
             await file.UploadFromStreamAsync(stream);
-
-            return true;
         }
 
-        public async Task<Stream> GetDownloadStreamAsync(String fileName)
+        public async Task<Stream> GetDownloadStreamAsync(string fileName)
         {
             await CheckFileShare();
 
