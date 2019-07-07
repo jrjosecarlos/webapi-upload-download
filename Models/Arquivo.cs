@@ -13,7 +13,7 @@ namespace WebApiUploadDownload.Models
         public string Nome { get; set; }
 
         [StringLength(200)]
-        public string Caminho { get; set; }
+        public string NomeReal { get; set; }
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         [Display(Name = "Data de Criação")]

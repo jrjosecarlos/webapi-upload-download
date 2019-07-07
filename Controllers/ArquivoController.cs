@@ -2,15 +2,16 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApiUploadDownload.Data;
 using WebApiUploadDownload.Models;
 using WebApiUploadDownload.Models.ViewModels;
+using WebApiUploadDownload.Services;
 
 namespace WebApiUploadDownload.Controllers
 {
@@ -20,51 +21,27 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
-        private string BaseUploadFolder
-        {
-            get
-            {
-                return Path.Combine(_env.WebRootPath, "uploaded");
-            }
-        }
+        private readonly IFileServerProvider _fileServerProvider;
+        private string BaseUploadFolder => Path.Combine(_env.WebRootPath, "uploaded");
 
-        public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
+        public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env,
+            IFileServerProvider fileServerProvider)
         {
             _context = context;
             _env = env;
+            _fileServerProvider = fileServerProvider;
         }
 
         // GET: api/Arquivo
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArquivoBaseViewModel>>> GetArquivos()
         {
-            //TODO: Código de inicialização para testes, será removido futuramente
-            if (_context.Arquivos.Count() == 0)
-            {
-
-                _context.Arquivos.Add(new Arquivo
-                {
-                    Nome = "Arquivo bin",
-                    ArquivoDB = new ArquivoDB
-                    {
-                        Conteudo = new byte[] { 0x30 }
-                    }
-                });
-                _context.Add(new Arquivo
-                {
-                    Nome = "Arquivo teste",
-                    Caminho = "pasta/teste"
-                });
-                _context.SaveChanges();
-            }
-
             var arquivos = _context.Arquivos
                 //.Include(a => a.ArquivoDB)
                 .Select(a => new ArquivoBaseViewModel
                 {
                     ID = a.ID,
                     Nome = a.Nome,
-                    Caminho = a.Caminho,
                     DataCriacao = a.DataCriacao,
                     IsArquivoDB = a.ArquivoDB != null
                 })
@@ -90,7 +67,7 @@ namespace WebApiUploadDownload.Controllers
             Stream stream;
             if (arquivo.ArquivoDB == null)
             {
-                var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.Caminho);
+                /*var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.NomeReal);
 
                 var fileInfo = new FileInfo(caminhoArquivo);
 
@@ -105,14 +82,16 @@ namespace WebApiUploadDownload.Controllers
                     return BadRequest();
                 }
 
-                stream = fileInfo.OpenRead();
+                stream = fileInfo.OpenRead();*/
+                stream = await _fileServerProvider.GetDownloadStreamAsync(arquivo.NomeReal);
+
             }
             else
             {
                 stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
             }
 
-            return File(stream, "application/octet-stream", arquivo.Caminho);
+            return File(stream, "application/octet-stream", arquivo.NomeReal);
         }
 
         // POST: api/Arquivo
@@ -138,9 +117,9 @@ namespace WebApiUploadDownload.Controllers
             var caracteresInvalidos = Path.GetInvalidFileNameChars();
             var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
 
-            arquivoBase.Caminho = nomeArquivoSanitizado;
-
             Arquivo arquivo = arquivoBase.ToArquivo();
+
+            arquivo.NomeReal = nomeArquivoSanitizado;
 
             if (!TryValidateModel(arquivo))
             {
@@ -162,11 +141,17 @@ namespace WebApiUploadDownload.Controllers
             }
             else
             {
+                /*
                 // Garantir que a pasta de upload está criada
                 Directory.CreateDirectory(this.BaseUploadFolder);
                 using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
                 {
                     await arquivoPayload.CopyToAsync(fileStream);
+                }
+                */
+                using (var readStream = arquivoPayload.OpenReadStream())
+                {
+                    await _fileServerProvider.UploadFromStreamAsync(arquivo.NomeReal, readStream);
                 }
             }
 
