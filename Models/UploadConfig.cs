@@ -9,6 +9,8 @@ namespace WebApiUploadDownload.Models
     {
         public string BaseDir { get; set; }
 
+        public string FileShareName { get; set; }
+
         public UploadConfig()
         {
 

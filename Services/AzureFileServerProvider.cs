@@ -1,12 +1,14 @@
 ﻿using Microsoft.Azure;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.File;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApiUploadDownload.Models;
 
 namespace WebApiUploadDownload.Services
 {
@@ -16,12 +18,19 @@ namespace WebApiUploadDownload.Services
 
         private readonly CloudFileShare _fileShare;
 
-        private readonly string _baseDir = "uploaded";
+        private readonly string _baseDir;
 
-        private readonly string _fileShareName = "flshr201906301117";
+        private readonly string _fileShareName;
 
-        public AzureFileServerProvider()
+        private readonly IOptions<UploadConfig> _config;
+
+        public AzureFileServerProvider(IOptions<UploadConfig> config)
         {
+            _config = config;
+
+            _baseDir = _config.Value.BaseDir ?? "uploaded";
+            _fileShareName = _config.Value.FileShareName;
+
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_connectionString);
 
             // Create a CloudFileClient object for credentialed access to Azure Files.
