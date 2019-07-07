@@ -24,11 +24,12 @@ namespace WebApiUploadDownload.Controllers
         private readonly IFileServerProvider _fileServerProvider;
         private string BaseUploadFolder => Path.Combine(_env.WebRootPath, "uploaded");
 
-        public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
+        public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env,
+            IFileServerProvider fileServerProvider)
         {
             _context = context;
             _env = env;
-            _fileServerProvider = new LocalFileServerProvider(BaseUploadFolder);
+            _fileServerProvider = fileServerProvider;
         }
 
         // GET: api/Arquivo

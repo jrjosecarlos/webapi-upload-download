@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using WebApiUploadDownload.Data;
 using WebApiUploadDownload.Models;
+using WebApiUploadDownload.Services;
 
 namespace WebApiUploadDownload
 {
@@ -46,6 +47,10 @@ namespace WebApiUploadDownload
                     options.EnableSensitiveDataLogging(true);
                 }
                 );
+
+            services.Configure<UploadConfig>(Configuration.GetSection("UploadConfig"));
+
+            services.AddTransient<IFileServerProvider, LocalFileServerProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
