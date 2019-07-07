@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WebApiUploadDownload.Services
 {
-    interface IFileServerProvider
+    public interface IFileServerProvider
     {
         Task UploadFromStreamAsync(string fileName, Stream stream);
 
