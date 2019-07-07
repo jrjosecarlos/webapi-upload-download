@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace WebApiUploadDownload.Services
 {
-    public class AzureFileServerProvider
+    public class AzureFileServerProvider : IFileServerProvider
     {
         private readonly string _connectionString = "";
 

@@ -21,7 +21,7 @@ namespace WebApiUploadDownload.Controllers
     {
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
-        private readonly AzureFileServerProvider _fileServerProvider;
+        private readonly IFileServerProvider _fileServerProvider;
         private string BaseUploadFolder => Path.Combine(_env.WebRootPath, "uploaded");
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env)
