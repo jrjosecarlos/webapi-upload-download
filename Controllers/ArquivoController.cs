@@ -32,12 +32,20 @@ namespace WebApiUploadDownload.Controllers
             _fileServerProvider = fileServerProvider;
         }
 
+        public async Task<bool> VerificarArquivoUnico(string nomeReal)
+        {
+            var arquivoExistente = await _context.Arquivos
+                .Where(a => a.NomeReal == nomeReal)
+                .FirstOrDefaultAsync();
+
+            return arquivoExistente != null;
+        }
+
         // GET: api/Arquivo
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArquivoBaseViewModel>>> GetArquivos()
         {
             var arquivos = _context.Arquivos
-                //.Include(a => a.ArquivoDB)
                 .Select(a => new ArquivoBaseViewModel
                 {
                     ID = a.ID,
@@ -67,22 +75,6 @@ namespace WebApiUploadDownload.Controllers
             Stream stream;
             if (arquivo.ArquivoDB == null)
             {
-                /*var caminhoArquivo = Path.Combine(this.BaseUploadFolder, arquivo.NomeReal);
-
-                var fileInfo = new FileInfo(caminhoArquivo);
-
-                if (!fileInfo.Exists)
-                {
-                    return NotFound();
-                }
-
-                // TODO: verificar se essa verificação é necessária (a situação descrita só ocorreria por um erro no upload)
-                if (fileInfo.Attributes.HasFlag(FileAttributes.Directory))
-                {
-                    return BadRequest();
-                }
-
-                stream = fileInfo.OpenRead();*/
                 stream = await _fileServerProvider.GetDownloadStreamAsync(arquivo.NomeReal);
 
             }
@@ -113,7 +105,6 @@ namespace WebApiUploadDownload.Controllers
             IFormFile arquivoPayload = arquivoUploadVM.Arquivo;
 
             // Sanitizar o nome do arquivo
-            //TODO: Adicionar validação de arquivo: extensões e tamanho
             var caracteresInvalidos = Path.GetInvalidFileNameChars();
             var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
 
@@ -123,11 +114,19 @@ namespace WebApiUploadDownload.Controllers
 
             if (!TryValidateModel(arquivo))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new ValidationProblemDetails(ModelState));
             }
 
-            // Separar toda a lógica de gravação de arquivo (e talvez de banco) para uma classe diferente, provavelmente um serviço
+            // Verificar se já existe arquivo com o mesmo nome
+            var arquivoExistente = await VerificarArquivoUnico(arquivo.NomeReal);
 
+            if (arquivoExistente)
+            {
+                ModelState.AddModelError("Arquivo", $"Arquivo já existente: {arquivo.Nome}");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
+            // Grava o arquivo em banco ou no File Server, dependendo do parâmetro
             if (arquivoBase.IsArquivoDB)
             {
                 using (var memoryStream = new MemoryStream())
@@ -141,14 +140,6 @@ namespace WebApiUploadDownload.Controllers
             }
             else
             {
-                /*
-                // Garantir que a pasta de upload está criada
-                Directory.CreateDirectory(this.BaseUploadFolder);
-                using (var fileStream = new FileStream(Path.Combine(this.BaseUploadFolder, nomeArquivoSanitizado), FileMode.Create, FileAccess.Write))
-                {
-                    await arquivoPayload.CopyToAsync(fileStream);
-                }
-                */
                 using (var readStream = arquivoPayload.OpenReadStream())
                 {
                     await _fileServerProvider.UploadFromStreamAsync(arquivo.NomeReal, readStream);
