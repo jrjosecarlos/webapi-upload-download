@@ -19,7 +19,7 @@ function getData() {
                 const tr = $("<tr></tr>")
                     .append($("<td></td>").text(item.nome))
                     .append(
-                        $("<td></td>").append(
+                        $("<td class='center'></td>").append(
                             $("<input/>", {
                                 type: "checkbox",
                                 disabled: true,
@@ -30,13 +30,6 @@ function getData() {
                     .append(
                         $("<td></td>").append(
                             $("<a>Download</a>").attr("href", uri + "/" + item.id)
-                        )
-                    )
-                    .append(
-                        $("<td></td>").append(
-                            $("<button>Excluir</button>").on("click", function () {
-                                deleteItem(item.id);
-                            })
                         )
                     );
 
@@ -96,7 +89,8 @@ function addItem() {
                 });
                 
             } else {
-                $(conteudoInfo).append(" Verifique os dados e tente novamente.")
+                conteudoInfo = $("<span/>")
+                    .append("Verifique os dados e tente novamente.");
             }
 
             $(divInfo).empty()
