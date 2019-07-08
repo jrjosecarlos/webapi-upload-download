@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApiUploadDownload.Data;
 
 namespace WebApiUploadDownload.Migrations
 {
     [DbContext(typeof(WebApiUploadDownloadContext))]
-    partial class WebApiUploadDownloadContextModelSnapshot : ModelSnapshot
+    [Migration("20190708001126_UniqueNomeReal")]
+    partial class UniqueNomeReal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

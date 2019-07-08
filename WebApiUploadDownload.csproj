@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Remove="Migrations\20190705032237_CriacaoInicial.cs" />
     <Compile Remove="Migrations\20190705032237_CriacaoInicial.Designer.cs" />
+    <Compile Remove="Migrations\20190708001031_UniqueNomeReal.cs" />
+    <Compile Remove="Migrations\20190708001031_UniqueNomeReal.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

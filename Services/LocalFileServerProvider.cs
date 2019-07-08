@@ -23,24 +23,24 @@ namespace WebApiUploadDownload.Services
             _baseDir = _config.Value.BaseDir ?? "uploaded";
         }
 
-        public Task<Stream> GetDownloadStreamAsync(string fileName)
+        public Task<Stream> GetDownloadStreamAsync(string nomeArquivo)
         {
-            var caminhoArquivo = Path.Combine(FullBaseDir, fileName);
+            var caminhoArquivo = Path.Combine(FullBaseDir, nomeArquivo);
 
             var fileInfo = new FileInfo(caminhoArquivo);
 
             if (!fileInfo.Exists)
             {
-                throw new FileNotFoundException($"Arquivo não encontrado: {fileName}");
+                throw new FileNotFoundException($"Arquivo não encontrado: {nomeArquivo}");
             }
 
             return Task.FromResult((Stream) fileInfo.OpenRead());
         }
 
-        public Task UploadFromStreamAsync(string fileName, Stream stream)
+        public Task UploadFromStreamAsync(string nomeArquivo, Stream stream)
         {
             Directory.CreateDirectory(FullBaseDir);
-            using (var fileStream = new FileStream(Path.Combine(FullBaseDir, fileName), FileMode.Create, FileAccess.Write))
+            using (var fileStream = new FileStream(Path.Combine(FullBaseDir, nomeArquivo), FileMode.Create, FileAccess.Write))
             {
                 return stream.CopyToAsync(fileStream);
             }

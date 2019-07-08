@@ -52,25 +52,24 @@ namespace WebApiUploadDownload.Services
             return baseDir;
         }
 
-        public async Task UploadFromStreamAsync(string fileName, Stream stream)
+        public async Task UploadFromStreamAsync(string nomeArquivo, Stream stream)
         {
             await CheckFileShare();
 
-            // Get a reference to the file we created previously.
-            CloudFile file = (await GetBaseDir()).GetFileReference(fileName);
+            CloudFile file = (await GetBaseDir()).GetFileReference(nomeArquivo);
 
             await file.UploadFromStreamAsync(stream);
         }
 
-        public async Task<Stream> GetDownloadStreamAsync(string fileName)
+        public async Task<Stream> GetDownloadStreamAsync(string nomeArquivo)
         {
             await CheckFileShare();
 
-            CloudFile file = (await GetBaseDir()).GetFileReference(fileName);
+            CloudFile file = (await GetBaseDir()).GetFileReference(nomeArquivo);
 
             if (!(await file.ExistsAsync()))
             {
-                throw new ArgumentException($"Arquivo {fileName} não encontrado");
+                throw new ArgumentException($"Arquivo {nomeArquivo} não encontrado");
             }
 
             return await file.OpenReadAsync();

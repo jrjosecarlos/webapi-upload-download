@@ -17,8 +17,11 @@ namespace WebApiUploadDownload.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arquivo>()
-                .Property(b => b.DataCriacao)
+                .Property(a => a.DataCriacao)
                 .HasDefaultValueSql("getdate()");
+            modelBuilder.Entity<Arquivo>()
+                .HasIndex(a => a.NomeReal)
+                .IsUnique();
         }
 
         public DbSet<Arquivo> Arquivos { get; set; }
