@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WebApiUploadDownload.Models;
 
-namespace WebApiUploadDownload.Models
+namespace WebApiUploadDownload.Data
 {
     public class WebApiUploadDownloadContext : DbContext
     {
@@ -16,10 +17,11 @@ namespace WebApiUploadDownload.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Arquivo>()
-                .Property(b => b.DataCriacao)
+                .Property(a => a.DataCriacao)
                 .HasDefaultValueSql("getdate()");
-            modelBuilder.Entity<ArquivoFS>()
-                .HasBaseType<Arquivo>();
+            modelBuilder.Entity<Arquivo>()
+                .HasIndex(a => a.NomeReal)
+                .IsUnique();
         }
 
         public DbSet<Arquivo> Arquivos { get; set; }

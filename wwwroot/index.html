@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebApi Download e Upload</title>
+    <style>
+        input[type='submit'], button {
+            cursor: pointer;
+        }
+
+        #info {
+            display: none;
+            border: 1px solid;
+            border-color: black;
+            padding: 2px;
+            color: red;
+        }
+
+        table {
+            font-family: Arial, sans-serif;
+            border: 1px solid;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #0066CC;
+            color: white;
+        }
+
+        td {
+            border: 1px solid;
+            padding: 5px;
+        }
+
+        td.center {
+            text-align: center;
+        }
+
+        ul {
+            margin: 10px 10px;
+        }
+
+        form {
+            margin: 10px 10px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script src="site.js"></script>
+</head>
+<body>
+    <h1>WebApi Download e Upload</h1>
+    <h3>Incluir</h3>
+    <div id="info"></div>
+
+    <form id="main-form" action="javascript:void(0);" method="POST" onsubmit="addItem()">
+        <input type="file" id="add-file" placeholder="Novo Arquivo">
+        <label name="label-add-DB">Adicionar em banco de dados?</label>
+        <input type="checkbox" id="add-DB" />
+        <input type="submit" value="Upload">
+    </form>
+
+    <table>
+        <tr>
+            <th>Nome Arquivo</th>
+            <th>Banco de dados?</th>
+            <th></th>
+        </tr>
+        <tbody id="arquivos"></tbody>
+    </table>
+
+
+</body>
+</html>
