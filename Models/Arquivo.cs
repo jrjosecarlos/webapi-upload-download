@@ -12,6 +12,7 @@ namespace WebApiUploadDownload.Models
         [StringLength(80)]
         public string Nome { get; set; }
 
+        [Required]
         [StringLength(200)]
         public string NomeReal { get; set; }
 
