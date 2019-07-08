@@ -22,7 +22,6 @@ namespace WebApiUploadDownload.Controllers
         private readonly WebApiUploadDownloadContext _context;
         private readonly IHostingEnvironment _env;
         private readonly IFileServerProvider _fileServerProvider;
-        private string BaseUploadFolder => Path.Combine(_env.WebRootPath, "uploaded");
 
         public ArquivoController(WebApiUploadDownloadContext context, IHostingEnvironment env,
             IFileServerProvider fileServerProvider)
@@ -58,6 +57,12 @@ namespace WebApiUploadDownload.Controllers
             return await arquivos.ToListAsync();
         }
 
+        private string SanitizarNomeArquivo(string nomeArquivo)
+        {
+            var caracteresInvalidos = Path.GetInvalidFileNameChars();
+            return String.Join("_", nomeArquivo.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+        }
+
         // GET: api/Arquivo/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArquivo(int id)
@@ -65,6 +70,7 @@ namespace WebApiUploadDownload.Controllers
             var arquivo = await _context.Arquivos
                 .Include(a => a.ArquivoDB)
                 .Where(a => a.ID == id)
+                .AsNoTracking()
                 .FirstOrDefaultAsync();
 
             if (arquivo == null)
@@ -73,14 +79,21 @@ namespace WebApiUploadDownload.Controllers
             }
 
             Stream stream;
-            if (arquivo.ArquivoDB == null)
+            try
             {
-                stream = await _fileServerProvider.GetDownloadStreamAsync(arquivo.NomeReal);
+                if (arquivo.ArquivoDB == null)
+                {
+                    stream = await _fileServerProvider.GetDownloadStreamAsync(arquivo.NomeReal);
 
+                }
+                else
+                {
+                    stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
+                }
             }
-            else
+            catch (Exception e)
             {
-                stream = new MemoryStream(arquivo.ArquivoDB.Conteudo, false);
+                return StatusCode(500, $"Erro ao recuperar arquivo: {e}");
             }
 
             return File(stream, "application/octet-stream", arquivo.NomeReal);
@@ -105,16 +118,15 @@ namespace WebApiUploadDownload.Controllers
             IFormFile arquivoPayload = arquivoUploadVM.Arquivo;
 
             // Sanitizar o nome do arquivo
-            var caracteresInvalidos = Path.GetInvalidFileNameChars();
-            var nomeArquivoSanitizado = String.Join("_", arquivoPayload.FileName.Split(caracteresInvalidos, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+
 
             Arquivo arquivo = arquivoBase.ToArquivo();
 
-            arquivo.NomeReal = nomeArquivoSanitizado;
+            arquivo.NomeReal = SanitizarNomeArquivo(arquivoPayload.FileName);
 
             if (!TryValidateModel(arquivo))
             {
-                return BadRequest(new ValidationProblemDetails(ModelState));
+                return ValidationProblem(ModelState);
             }
 
             // Verificar se já existe arquivo com o mesmo nome
@@ -123,29 +135,37 @@ namespace WebApiUploadDownload.Controllers
             if (arquivoExistente)
             {
                 ModelState.AddModelError("Arquivo", $"Arquivo já existente: {arquivo.Nome}");
-                return BadRequest(new ValidationProblemDetails(ModelState));
+                return ValidationProblem(ModelState);
             }
 
             // Grava o arquivo em banco ou no File Server, dependendo do parâmetro
-            if (arquivoBase.IsArquivoDB)
+            try
             {
-                using (var memoryStream = new MemoryStream())
+                if (arquivoBase.IsArquivoDB)
                 {
-                    await arquivoPayload.CopyToAsync(memoryStream);
-                    arquivo.ArquivoDB = new ArquivoDB
+                    using (var memoryStream = new MemoryStream())
                     {
-                        Conteudo = memoryStream.ToArray()
+                        await arquivoPayload.CopyToAsync(memoryStream);
+                        arquivo.ArquivoDB = new ArquivoDB
+                        {
+                            Conteudo = memoryStream.ToArray()
+                        };
                     };
-                };
-            }
-            else
-            {
-                using (var readStream = arquivoPayload.OpenReadStream())
+                }
+                else
                 {
-                    await _fileServerProvider.UploadFromStreamAsync(arquivo.NomeReal, readStream);
+                    using (var readStream = arquivoPayload.OpenReadStream())
+                    {
+                        await _fileServerProvider.UploadFromStreamAsync(arquivo.NomeReal, readStream);
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Erro ao enviar o arquivo: {e}");
+            }
 
+            // Grava a entrada no banco
             _context.Arquivos.Add(arquivo);
             await _context.SaveChangesAsync();
 
